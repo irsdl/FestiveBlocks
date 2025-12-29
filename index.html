@@ -2228,31 +2228,81 @@
       }
 
       function drawCell(ctx, x, y, color, size, type) {
-        const inset = size * 0.08;
+        const inset = size * 0.05;
+        const bevel = size * 0.15; // 3D bevel size
         
-        // Draw base block with bright gradient
-        const gradient = ctx.createLinearGradient(x, y, x, y + size);
-        gradient.addColorStop(0, adjustBrightness(color, 30));
-        gradient.addColorStop(0.5, adjustBrightness(color, 50));
-        gradient.addColorStop(1, adjustBrightness(color, 20));
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x + inset, y + inset, size - inset * 2, size - inset * 2);
+        // Parse color for manipulation
+        const baseColor = color;
+        const lightColor = adjustBrightness(color, 60);
+        const darkColor = adjustBrightness(color, -40);
+        const midColor = adjustBrightness(color, 20);
         
-        // Sparkle effect
-        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        // Draw bottom/right shadow (darkest - gives depth)
+        ctx.fillStyle = darkColor;
         ctx.beginPath();
-        ctx.arc(x + size * 0.25, y + size * 0.25, size * 0.1, 0, Math.PI * 2);
+        ctx.moveTo(x + inset, y + size - inset);
+        ctx.lineTo(x + size - inset, y + size - inset);
+        ctx.lineTo(x + size - inset, y + inset);
+        ctx.lineTo(x + size - inset - bevel, y + inset + bevel);
+        ctx.lineTo(x + size - inset - bevel, y + size - inset - bevel);
+        ctx.lineTo(x + inset + bevel, y + size - inset - bevel);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw top/left highlight (lightest - catches light)
+        ctx.fillStyle = lightColor;
+        ctx.beginPath();
+        ctx.moveTo(x + inset, y + inset);
+        ctx.lineTo(x + size - inset, y + inset);
+        ctx.lineTo(x + size - inset - bevel, y + inset + bevel);
+        ctx.lineTo(x + inset + bevel, y + inset + bevel);
+        ctx.lineTo(x + inset + bevel, y + size - inset - bevel);
+        ctx.lineTo(x + inset, y + size - inset);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw main face with gradient
+        const faceGradient = ctx.createLinearGradient(
+          x + inset + bevel, y + inset + bevel,
+          x + size - inset - bevel, y + size - inset - bevel
+        );
+        faceGradient.addColorStop(0, midColor);
+        faceGradient.addColorStop(0.5, baseColor);
+        faceGradient.addColorStop(1, adjustBrightness(color, -10));
+        ctx.fillStyle = faceGradient;
+        ctx.fillRect(
+          x + inset + bevel,
+          y + inset + bevel,
+          size - inset * 2 - bevel * 2,
+          size - inset * 2 - bevel * 2
+        );
+        
+        // Add glossy shine on top-left
+        const shineGradient = ctx.createRadialGradient(
+          x + size * 0.3, y + size * 0.3, 0,
+          x + size * 0.3, y + size * 0.3, size * 0.4
+        );
+        shineGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+        shineGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+        shineGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = shineGradient;
+        ctx.fillRect(x + inset, y + inset, size * 0.5, size * 0.5);
+        
+        // Small sparkle highlight
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.beginPath();
+        ctx.arc(x + size * 0.25, y + size * 0.25, size * 0.06, 0, Math.PI * 2);
         ctx.fill();
         
         // Draw Christmas emoji/character with enhanced visibility
         if (type && XMAS_THEMES[type]) {
           // Add shadow for depth
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-          ctx.shadowBlur = 3;
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 4;
           ctx.shadowOffsetX = 1;
-          ctx.shadowOffsetY = 1;
+          ctx.shadowOffsetY = 2;
           
-          ctx.font = `bold ${size * 0.7}px Arial`;
+          ctx.font = `bold ${size * 0.6}px Arial`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText(XMAS_THEMES[type].emoji, x + size / 2, y + size / 2 + 1);
@@ -2264,11 +2314,11 @@
           ctx.shadowOffsetY = 0;
         }
         
-        // Glowing border
-        ctx.shadowBlur = 8;
+        // Subtle outer glow
+        ctx.shadowBlur = 6;
         ctx.shadowColor = color;
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.lineWidth = 1;
         ctx.strokeRect(x + inset, y + inset, size - inset * 2, size - inset * 2);
         ctx.shadowBlur = 0;
       }
